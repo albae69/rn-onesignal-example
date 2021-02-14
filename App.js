@@ -1,114 +1,82 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow strict-local
- */
+import React, {useEffect, useState} from 'react';
+import {Alert, StyleSheet, Text, View} from 'react-native';
+import OneSignal from 'react-native-onesignal';
 
-import React from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  ScrollView,
-  View,
-  Text,
-  StatusBar,
-} from 'react-native';
+const App = () => {
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
-import {
-  Header,
-  LearnMoreLinks,
-  Colors,
-  DebugInstructions,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+  let appId = '17e3330d-7aab-433b-8074-5a2686c150e6';
 
-const App: () => React$Node = () => {
+  useEffect(() => {
+    // onesignal setup start
+    OneSignal.setAppId(appId);
+    OneSignal.setLogLevel(6, 0);
+    OneSignal.setRequiresUserPrivacyConsent(false);
+    OneSignal.promptForPushNotificationsWithUserResponse((res) => {
+      console.log('prompt response', res);
+    });
+    // onesignal setup end
+
+    // onesignal handler start
+    OneSignal.setNotificationWillShowInForegroundHandler((foregroundNotif) => {
+      console.log('one signal notification foreground: ', foregroundNotif);
+      let notif = foregroundNotif.getNotification();
+
+      const btn1 = {
+        text: 'cancel',
+        onePress: () => {
+          foregroundNotif.complete();
+        },
+        style: 'cancel',
+      };
+
+      const btn2 = {
+        text: 'complete',
+        onePress: () => {
+          foregroundNotif.complete(notif);
+        },
+      };
+      Alert.alert('complete notification?', 'tes', [btn1, btn2], {
+        cancelable: true,
+      });
+    });
+
+    OneSignal.setNotificationOpenedHandler((notification) =>
+      console.log('onesignal: notification opened', notification),
+    );
+    OneSignal.setInAppMessageClickHandler((e) => console.log('iam clicked', e));
+    OneSignal.addEmailSubscriptionObserver((e) =>
+      console.log('onesignal email subscription changed', e),
+    );
+    OneSignal.addSubscriptionObserver((e) => {
+      console.log('onesignal subscription changed', e);
+      setIsSubscribed(e.to.isSubscribed);
+    });
+    OneSignal.addPermissionObserver((e) =>
+      console.log('onesignal: permission changed', e),
+    );
+
+    const getDevice = async () => {
+      const device = await OneSignal.getDeviceState();
+      return device;
+    };
+
+    getDevice()
+      .then((res) => {
+        setIsSubscribed(res);
+        console.log(res);
+      })
+      .catch((err) => console.log('error', err));
+    // onesignal handler end
+  }, []);
+
   return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
+    <View>
+      <Text>Hello World!</Text>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: Colors.lighter,
-  },
-  engine: {
-    position: 'absolute',
-    right: 0,
-  },
-  body: {
-    backgroundColor: Colors.white,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-    color: Colors.dark,
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-  footer: {
-    color: Colors.dark,
-    fontSize: 12,
-    fontWeight: '600',
-    padding: 4,
-    paddingRight: 12,
-    textAlign: 'right',
-  },
-});
-
 export default App;
+
+const styles = StyleSheet.create({});
